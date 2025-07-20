@@ -9,7 +9,7 @@ class Config(BaseModel):
     gd_api_base_url: str = Field(...)
     gd_default_model: str = Field(...)
 
-    # 选填
+    # 选填 
     gd_default_tmp: float = 0.7
     gd_ask_tmp: float | None = None
     gd_ask_model: str | None = None
