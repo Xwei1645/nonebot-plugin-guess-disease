@@ -1,5 +1,5 @@
 from nonebot import get_driver, get_plugin_config
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 
 
 class Config(BaseModel):
@@ -22,5 +22,6 @@ class Config(BaseModel):
     @validator("gd_allowed_groups", pre=True)
     def parse_groups(cls, v):
         if isinstance(v, str):
+            v = v.strip("[]")
             return {int(item) for item in v.split(",") if item.strip()}
         return v
