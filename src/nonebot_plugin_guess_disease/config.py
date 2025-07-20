@@ -1,14 +1,20 @@
 from nonebot import get_driver, get_plugin_config
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class Config(BaseModel):
-    pass
+    model_config = {"extra": "ignore"}
+    # 必填
+    gd_api_key: str = Field(...)
+    gd_api_base_url: str = Field(...)
+    gd_default_model: str = Field(...)
 
-
-# 配置加载
-plugin_config: Config = get_plugin_config(Config)
-global_config = get_driver().config
-
-# 全局名称
-NICKNAME: str = next(iter(global_config.nickname), "")
+    # 选填
+    gd_default_tmp: float = 0.7
+    gd_ask_tmp: float | None = None
+    gd_ask_model: str | None = None
+    gd_report_tmp: float | None = None
+    gd_report_model: str | None = None
+    gd_check_tmp: float | None = None
+    gd_check_model: str | None = None
+    gd_allowed_groups: set[int] = set()
