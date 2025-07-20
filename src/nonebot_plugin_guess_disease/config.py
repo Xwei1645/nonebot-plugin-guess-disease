@@ -17,4 +17,10 @@ class Config(BaseModel):
     gd_report_model: str | None = None
     gd_check_tmp: float | None = None
     gd_check_model: str | None = None
-    gd_allowed_groups: set[int] = set()
+    gd_allowed_groups: set[int] = Field(default_factory=set)
+
+    @validator("gd_allowed_groups", pre=True)
+    def parse_groups(cls, v):
+        if isinstance(v, str):
+            return {int(item) for item in v.split(",") if item.strip()}
+        return v
