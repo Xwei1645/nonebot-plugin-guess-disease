@@ -15,7 +15,7 @@ __plugin_meta__ = PluginMetadata(
     homepage="https://github.com/Xwei1645/nonebot-plugin-guess-disease",
     config=Config,
     supported_adapters={"~onebot.v11"},
-    "type"="application",
+    type="application",
 )
 
 config = get_plugin_config(Config)
