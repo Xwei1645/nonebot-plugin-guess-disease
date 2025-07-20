@@ -9,7 +9,7 @@ requires-python = ">=3.10,<3.13"
 dependencies = [
   "nonebot2>=2.4.2,<3.0.0",
   "nonebot-adapter-onebot>=2.4.6,<3.0.0", # 仅 onebot 应取消注释
-  "opeai>=1.0.0",
+  "openai>=1.0.0",
 ]
 
 [dependency-groups]
