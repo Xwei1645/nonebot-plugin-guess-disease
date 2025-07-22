@@ -54,7 +54,7 @@ async def start_handler(event: Event):
         starting[group_id] = True
         await start.send("你好，医生。", at_sender=True)
         if non_rare_count >= 10:
-            await start.send(f"罕见病保底计数 {non_rare_count} / 30")
+            await start.send(f"罕见病保底计数 {int(non_rare_count)} / 30")
         elif not non_rare_count:
             await start.send("⚠触发罕见病保底⚠")
 

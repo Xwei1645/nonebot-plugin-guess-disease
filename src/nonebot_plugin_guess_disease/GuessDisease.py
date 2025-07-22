@@ -1,10 +1,16 @@
-from importlib.resources import as_file, files
+from importlib.resources import files
+from pathlib import Path
 import json
 import random
 
 from nonebot import get_plugin_config, logger
 import nonebot_plugin_localstore as store
 from openai import AsyncOpenAI
+
+import anyio
+
+
+
 
 from .config import Config
 
@@ -65,66 +71,72 @@ async def call_api(
         return f"{e}病人好像...似了。"
 
 
-async def form():
-    data_file = store.get_plugin_data_file("diseases.json")
+async def form() -> tuple[float, str]:
+    data_file   = store.get_plugin_data_file("diseases.json")
     counter_file = store.get_plugin_data_file("random_data.json")
 
     try:
-        if not data_file.exists():
-            logger.warning("文件不存在，将加载 examples/diseases.json")
-            examples_path = files("nonebot_plugin_guess_disease").joinpath("examples")
-            diseases_json_path = examples_path / "diseases.json"
-            if diseases_json_path.exists():
-                with as_file(examples_path / "diseases.json") as p:
-                    diseases_data = json.loads(p.read_text(encoding="utf-8"))
-                logger.info("成功加载 examples/diseases.json")
-            else:
-                logger.error("examples/diseases.json 文件不存在，数据为空")
-                diseases_data = {"common_diseases": [], "uncommon_diseases": [], "rare_diseases": []}
-            data_file.write_text(json.dumps(diseases_data, ensure_ascii=False, indent=2), encoding="utf-8")
+        if not await anyio.Path(data_file).exists():
+            logger.warning("本地数据中 diseases.json 不存在，使用 examples/diseases.json")
+            this_dir = Path(__file__).resolve().parent
+            example_data = this_dir / "examples" / "diseases.json"
+            diseases_data = json.loads(
+                await anyio.Path(example_data).read_text(encoding="utf-8")
+            )
+            logger.success("加载 examples/diseases.json 成功")
+            logger.warning("请及时修改数据目录中的 diseases.json")
         else:
-            with data_file.open("r", encoding="utf-8") as f:
-                diseases_data = json.load(f)
-            logger.success(f"成功加载 JSON 数据：{len(diseases_data['common_diseases'])} common, {len(diseases_data['uncommon_diseases'])} uncommon, {len(diseases_data['rare_diseases'])} rare diseases.")
+            diseases_data = json.loads(
+                await anyio.Path(data_file).read_text(encoding="utf-8")
+            )
     except Exception as e:
-        logger.error(f"加载疾病数据时出错：{e}")
-        diseases_data = {"common_diseases": [], "uncommon_diseases": [], "rare_diseases": []}
+        logger.error(f"读取疾病数据失败：{e}")
+        diseases_data = {
+            "common_diseases": [],
+            "uncommon_diseases": [],
+            "rare_diseases": [],
+        }
 
     try:
-        if not counter_file.exists():
-            logger.warning(f"文件不存在，将创建新文件：{counter_file}")
-            counter = {"non_rare_count": 0}
-            counter_file.write_text(json.dumps(counter, ensure_ascii=False, indent=2), encoding="utf-8")
+        if not await anyio.Path(counter_file).exists():
+            counter = {"non_rare_count": 0.0}
+            await anyio.Path(counter_file).write_text(
+                json.dumps(counter, ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
         else:
-            counter = json.loads(counter_file.read_text(encoding="utf-8"))
+            counter = json.loads(
+                await anyio.Path(counter_file).read_text(encoding="utf-8")
+            )
     except Exception as e:
-        logger.error(f"加载计数器时出错：{e}")
-        counter = {"non_rare_count": 0}
+        logger.error(f"读取计数器失败：{e}")
+        counter = {"non_rare_count": 0.0}
 
-    non_rare_count = counter["non_rare_count"]
-    logger.info(f"当前保底计数：{non_rare_count} / 30")
+    non_rare_count: float = counter["non_rare_count"]
 
     rand = random.random()
-    if rand < 0.645:
+    if rand < 0.45:
         disease = random.choice(diseases_data["common_diseases"])
-        non_rare_count += 1
+        non_rare_count += 1.0
     elif rand < 0.89:
         disease = random.choice(diseases_data["uncommon_diseases"])
-        non_rare_count += 1
+        non_rare_count += 1.0
     else:
         disease = random.choice(diseases_data["rare_diseases"])
-        non_rare_count = 0.1
+        non_rare_count = 0.1    # 0.1 为 True，可用于区别是否为保底
 
-    if non_rare_count >= 30:
+    if non_rare_count >= 30.0:
         disease = random.choice(diseases_data["rare_diseases"])
-        non_rare_count = 0
+        non_rare_count = 0.0
 
     counter["non_rare_count"] = non_rare_count
-    counter_file.write_text(json.dumps(counter, ensure_ascii=False, indent=2), encoding="utf-8")
+    await anyio.Path(counter_file).write_text(
+        json.dumps(counter, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
 
     logger.info(f"生成疾病：{disease}，更新后保底计数：{non_rare_count}")
     return non_rare_count, disease
-
 
 # 在 check() 后再次校验，减小错判概率
 async def ask(disease: str, question: str) -> dict[bool, str]:
