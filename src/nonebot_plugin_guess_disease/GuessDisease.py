@@ -202,9 +202,13 @@ async def ask(disease: str, question: str) -> dict[bool, str]:
 async def check(ans, disease):
     if ans == disease:
         return True
-    system_prompt = "你只可以输出 `True` 或 `False`。"
-    prompt = f"""请判断医生的话“{ans}”是不是对“{disease}”这一疾病下了诊断，表述近似也可以。
-    如果是，请输出 `True`，否则输出 `False`。判断标准应适当严格一点。"""
+    system_prompt = f"""请判断医生的话【{ans}】中，是不是对【{disease}】这一疾病下了诊断。如果是，请输出 `True`，否则输出 `False`
+    下面是注意事项：
+    - 可以适当忽略疾病的定语，如【原发性】【过敏性】【慢性】【急性】【先天性】等；
+    - 可以接受疾病的别名、俗名、近似名称。
+    - 绝对不接受【脑子病】【肚子疼】【肌肉萎缩病】等类似的随机排列组合或只描述症状的说法。
+    - 你只可以输出 `True` 或 `False`。"""
+    prompt = f"请判断医生的话【{ans}】中，是不是对【{disease}】这一疾病下了诊断。"
     tmp = check_tmp
     while True:
         result = await call_api(prompt, system_prompt=system_prompt, tmp=tmp, model=check_model)
