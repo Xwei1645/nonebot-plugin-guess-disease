@@ -83,7 +83,7 @@ async def form():
         else:
             with data_file.open("r", encoding="utf-8") as f:
                 diseases_data = json.load(f)
-            logger.success(f"成功加载 JSON 数据：{len(diseases_data["common_diseases"])} common, {len(diseases_data["uncommon_diseases"])} uncommon, {len(diseases_data["rare_diseases"])} rare diseases.")
+            logger.success(f"成功加载 JSON 数据：{len(diseases_data['common_diseases'])} common, {len(diseases_data['uncommon_diseases'])} uncommon, {len(diseases_data['rare_diseases'])} rare diseases.")
     except Exception as e:
         logger.error(f"加载疾病数据时出错：{e}")
         diseases_data = {"common_diseases": [], "uncommon_diseases": [], "rare_diseases": []}
