@@ -1,4 +1,7 @@
-from nonebot import get_plugin_config, on_command, on_message
+from nonebot import require
+require("nonebot_plugin_localstore")
+
+from nonebot import get_plugin_config, on_command, on_message, on_fullmatch
 from nonebot.adapters.onebot.v11 import Bot, Event, Message
 from nonebot.plugin import PluginMetadata
 
@@ -26,7 +29,7 @@ starting: dict[int, bool] = {}
 players: dict[int, set[int]] = {}
 current_disease: dict[int, str] = {}
 
-start = on_command("猜猜病", aliases={"猜病", "ccb", "cb"}, priority=5, block=True)
+start = on_command("猜猜病", aliases={"猜病", "ccb", "cb"}, priority=5, block=False)
 
 
 @start.handle()
@@ -45,10 +48,14 @@ async def start_handler(event: Event):
             await start.send("已加入游戏，快来 CaiCaiBing!!", at_sender=True)
     else:
         # 新开一局
-        current_disease[group_id] = form()
+        non_rare_count, current_disease[group_id] = await form()
         players[group_id] = {user_id}
         starting[group_id] = True
         await start.send("你好，医生。", at_sender=True)
+        if non_rare_count >= 10:
+            await start.send(f"罕见病保底计数 {non_rare_count} / 30")
+        elif not non_rare_count:
+            await start.send("⚠触发罕见病保底⚠")
 
 
 asking = on_message(priority=15, block=True)
@@ -73,19 +80,26 @@ async def asking_handler(bot: Bot, event: Event):
         current_disease.pop(group_id, None)
         return
 
-    # 正常提问
     try:
-        answer = await ask(current_disease[group_id], msg)
+        data = await ask(current_disease[group_id], msg)
+        if data["check"]:
+            await asking.send(f"猜对了，标准答案是：{current_disease[group_id]}。", at_sender=True)
+            # 清理
+            starting.pop(group_id, None)
+            players.pop(group_id, None)
+            current_disease.pop(group_id, None)
+            return
+        answer = data["content"]
         await asking.send(Message(f"[CQ:reply,id={event.message_id}]{answer}"))
     except KeyError:
         await asking.send(
-            Message(f"[CQ:reply,id={event.message_id}]KeyError\n可能是由于游戏已结束或......病人已经死了。")
+            Message(f"[CQ:reply,id={event.message_id}]KeyError\n可能是由于游戏已结束或......病人已经似了。")
         )
     except Exception as e:
-        await asking.send(Message(f"[CQ:reply,id={event.message_id}]病人死了。\n{e}"))
+        await asking.send(Message(f"[CQ:reply,id={event.message_id}]病人似了。\n{e}"))
 
 
-ans = on_command("结束", priority=2, block=True)
+ans = on_fullmatch("结束", priority=2, block=True)
 
 
 @ans.handle()
@@ -118,5 +132,5 @@ async def reporting_handler(event: Event, bot: Bot):
         if starting.get(group_id, False):
             await reporting.send(Message(f"[CQ:reply,id={event.message_id}]{result}"))
         else:
-            await reporting.send(Message(f"[CQ:reply,id={event.message_id}]{result}\n\n但是......病人好像已经死了。"))
+            await reporting.send(Message(f"[CQ:reply,id={event.message_id}]{result}\n\n但是......病人好像已经似了。"))
         await bot.delete_msg(group_id=group_id, message_id=initial_msg["message_id"])
