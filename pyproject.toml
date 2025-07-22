@@ -30,10 +30,6 @@ test = [
   "pytest-asyncio>=1.1.0,<1.2.0",
 ]
 
-files = [
-    "examples/**/*",
-]
-
 [tool.nonebot]
 plugin-dirs = ["src"]
 
@@ -52,7 +48,7 @@ addopts = [
 ]
 
 [tool.ruff]
-line-length = 120
+line-length = 300
 target-version = "py310"
 
 [tool.ruff.format]

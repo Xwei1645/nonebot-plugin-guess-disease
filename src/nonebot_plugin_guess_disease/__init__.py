@@ -1,7 +1,8 @@
 from nonebot import require
+
 require("nonebot_plugin_localstore")
 
-from nonebot import get_plugin_config, on_command, on_message, on_fullmatch
+from nonebot import get_plugin_config, on_command, on_fullmatch, on_message
 from nonebot.adapters.onebot.v11 import Bot, Event, Message
 from nonebot.plugin import PluginMetadata
 
@@ -92,9 +93,7 @@ async def asking_handler(bot: Bot, event: Event):
         answer = data["content"]
         await asking.send(Message(f"[CQ:reply,id={event.message_id}]{answer}"))
     except KeyError:
-        await asking.send(
-            Message(f"[CQ:reply,id={event.message_id}]KeyError\n可能是由于游戏已结束或......病人已经似了。")
-        )
+        await asking.send(Message(f"[CQ:reply,id={event.message_id}]KeyError\n可能是由于游戏已结束或......病人已经似了。"))
     except Exception as e:
         await asking.send(Message(f"[CQ:reply,id={event.message_id}]病人似了。\n{e}"))
 
@@ -125,9 +124,7 @@ async def reporting_handler(event: Event, bot: Bot):
     kind = str(event.get_message()).strip().lstrip("检查")
 
     if starting.get(group_id, False) and user_id in players.get(group_id, set()):
-        initial_msg = await reporting.send(
-            Message(f"[CQ:reply,id={event.message_id}]已收到检查请求，检查即将开始，这可能需要 11-45 秒，请坐和放宽...")
-        )
+        initial_msg = await reporting.send(Message(f"[CQ:reply,id={event.message_id}]已收到检查请求，检查即将开始，这可能需要 11-45 秒，请坐和放宽..."))
         result = await report(current_disease[group_id], kind)
         if starting.get(group_id, False):
             await reporting.send(Message(f"[CQ:reply,id={event.message_id}]{result}"))

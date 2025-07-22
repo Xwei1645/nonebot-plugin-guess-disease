@@ -1,11 +1,11 @@
-from pathlib import Path
-from importlib.resources import files
-import nonebot_plugin_localstore as store
+from importlib.resources import as_file, files
 import json
-from nonebot import get_plugin_config, logger
-from typing import Optional, Dict
 import random
+
+from nonebot import get_plugin_config, logger
+import nonebot_plugin_localstore as store
 from openai import AsyncOpenAI
+
 from .config import Config
 
 config = get_plugin_config(Config)
@@ -29,6 +29,7 @@ check_model = config.gd_report_model or default_model
 
 client = AsyncOpenAI(api_key=api_key, base_url=api_base_url)
 
+
 async def call_api(
     prompt: str,
     system_prompt: str = "",
@@ -36,8 +37,8 @@ async def call_api(
     model: str = default_model,
     tmp: float = default_tmp,
     json_enabled: bool = False,
-    max_tokens: Optional[int] = 60,
-) -> Optional[str]:
+    max_tokens: int | None = 60,
+) -> str | None:
     messages = [
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": dialog},
@@ -63,6 +64,7 @@ async def call_api(
         logger.error(f"[call_api] 调用失败: {e}")
         return f"{e}病人好像...似了。"
 
+
 async def form():
     data_file = store.get_plugin_data_file("diseases.json")
     counter_file = store.get_plugin_data_file("random_data.json")
@@ -73,8 +75,8 @@ async def form():
             examples_path = files("nonebot_plugin_guess_disease").joinpath("examples")
             diseases_json_path = examples_path / "diseases.json"
             if diseases_json_path.exists():
-                with open(diseases_json_path, "r", encoding="utf-8") as f:
-                    diseases_data = json.load(f)
+                with as_file(examples_path / "diseases.json") as p:
+                    diseases_data = json.loads(p.read_text(encoding="utf-8"))
                 logger.info("成功加载 examples/diseases.json")
             else:
                 logger.error("examples/diseases.json 文件不存在，数据为空")
@@ -122,10 +124,10 @@ async def form():
 
     logger.info(f"生成疾病：{disease}，更新后保底计数：{non_rare_count}")
     return non_rare_count, disease
-    
+
 
 # 在 check() 后再次校验，减小错判概率
-async def ask(disease: str, question: str) -> Dict[bool, str]:
+async def ask(disease: str, question: str) -> dict[bool, str]:
     system_prompt = f"""
 你扮演一位【{disease}】患者，你会收到医生的消息，问你相关问题和对你的病情做判断，你的目的是在不告诉医生病名的情况下考核医生，和医生对话，检验医生问诊否能通过对话中你给的线索猜出你的疾病/病名。你需要严格遵循以下原则:
 
@@ -183,6 +185,7 @@ async def ask(disease: str, question: str) -> Dict[bool, str]:
                 logger.warning("返回 JSON 格式不正确，重试")
                 continue
             return data
+
 
 async def check(ans, disease):
     if ans == disease:
