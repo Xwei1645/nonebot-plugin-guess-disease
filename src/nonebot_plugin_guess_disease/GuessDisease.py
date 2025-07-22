@@ -1,4 +1,5 @@
 from pathlib import Path
+from importlib.resources import files
 import nonebot_plugin_localstore as store
 import json
 from nonebot import get_plugin_config, logger
@@ -23,7 +24,7 @@ ask_model = config.gd_ask_model or default_model
 report_tmp = config.gd_report_tmp or default_tmp or 0.3
 report_model = config.gd_report_model or default_model
 
-check_tmp = config.gd_report_tmp or default_tmp or 0.2
+check_tmp = config.gd_check_tmp or default_tmp or 0.2
 check_model = config.gd_report_model or default_model
 
 client = AsyncOpenAI(api_key=api_key, base_url=api_base_url)
@@ -63,13 +64,21 @@ async def call_api(
         return f"{e}病人好像...似了。"
 
 async def form():
-    data_file   = store.get_plugin_data_file("diseases.json")
+    data_file = store.get_plugin_data_file("diseases.json")
     counter_file = store.get_plugin_data_file("random_data.json")
 
     try:
         if not data_file.exists():
-            logger.warning(f"文件不存在，将创建新文件：{data_file}")
-            diseases_data = {"common_diseases": [], "uncommon_diseases": [], "rare_diseases": []}
+            logger.warning("文件不存在，将加载 examples/diseases.json")
+            examples_path = files("nonebot_plugin_guess_disease").joinpath("examples")
+            diseases_json_path = examples_path / "diseases.json"
+            if diseases_json_path.exists():
+                with open(diseases_json_path, "r", encoding="utf-8") as f:
+                    diseases_data = json.load(f)
+                logger.info("成功加载 examples/diseases.json")
+            else:
+                logger.error("examples/diseases.json 文件不存在，数据为空")
+                diseases_data = {"common_diseases": [], "uncommon_diseases": [], "rare_diseases": []}
             data_file.write_text(json.dumps(diseases_data, ensure_ascii=False, indent=2), encoding="utf-8")
         else:
             with data_file.open("r", encoding="utf-8") as f:

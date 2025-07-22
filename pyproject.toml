@@ -30,6 +30,11 @@ test = [
   "pytest-asyncio>=1.1.0,<1.2.0",
 ]
 
+[tool.uv.build]
+include = [
+    "examples/**/*",
+]
+
 [tool.nonebot]
 plugin-dirs = ["src"]
 
