@@ -1,11 +1,11 @@
 name: Initialize Repository
 
-on:
-  workflow_dispatch:    # 手动触发，可用于仓库首次初始化
-  push:
-    paths:
-      - 'LICENSE'      # 当 LICENSE 文件发生变更时触发
-      - '!.github/**'
+#on:
+#  workflow_dispatch:    # 手动触发，可用于仓库首次初始化
+#  push:
+#    paths:
+#      - 'LICENSE'      # 当 LICENSE 文件发生变更时触发
+#      - '!.github/**'
 
 jobs:
   init:
