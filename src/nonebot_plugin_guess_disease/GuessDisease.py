@@ -2,15 +2,10 @@ from importlib.resources import files
 from pathlib import Path
 import json
 import random
-
 from nonebot import get_plugin_config, logger
 import nonebot_plugin_localstore as store
 from openai import AsyncOpenAI
-
 import anyio
-
-
-
 
 from .config import Config
 
@@ -68,11 +63,11 @@ async def call_api(
         return resp.choices[0].message.content
     except Exception as e:
         logger.error(f"[call_api] 调用失败: {e}")
-        return f"{e}病人好像...似了。"
+        return f"{e}\n病人好像...似了。"
 
 
 async def form() -> tuple[float, str]:
-    data_file   = store.get_plugin_data_file("diseases.json")
+    data_file = store.get_plugin_data_file("diseases.json")
     counter_file = store.get_plugin_data_file("random_data.json")
 
     try:
@@ -204,7 +199,7 @@ async def check(ans, disease):
         return True
     system_prompt = f"""请判断医生的话【{ans}】中，是不是对【{disease}】这一疾病下了诊断。如果是，请输出 `True`，否则输出 `False`
     下面是注意事项：
-    - 可以适当忽略疾病的定语，如【原发性】【过敏性】【慢性】【急性】【先天性】等；
+    - 在判断时，可以忽略疾病的定语，如【原发性】【过敏性】【慢性】【急性】【先天性】等，即使没有这些定语诞生于部分匹配也算正确；
     - 可以接受疾病的别名、俗名、近似名称。
     - 绝对不接受【脑子病】【肚子疼】【肌肉萎缩病】等类似的随机排列组合或只描述症状的说法。
     - 你只可以输出 `True` 或 `False`。"""
