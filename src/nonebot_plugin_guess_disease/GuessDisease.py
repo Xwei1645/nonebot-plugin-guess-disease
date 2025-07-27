@@ -1,11 +1,11 @@
-from importlib.resources import files
-from pathlib import Path
 import json
+from pathlib import Path
 import random
+
+import anyio
 from nonebot import get_plugin_config, logger
 import nonebot_plugin_localstore as store
 from openai import AsyncOpenAI
-import anyio
 
 from .config import Config
 
@@ -75,15 +75,11 @@ async def form() -> tuple[float, str]:
             logger.warning("本地数据中 diseases.json 不存在，使用 examples/diseases.json")
             this_dir = Path(__file__).resolve().parent
             example_data = this_dir / "examples" / "diseases.json"
-            diseases_data = json.loads(
-                await anyio.Path(example_data).read_text(encoding="utf-8")
-            )
+            diseases_data = json.loads(await anyio.Path(example_data).read_text(encoding="utf-8"))
             logger.success("加载 examples/diseases.json 成功")
             logger.warning("请及时修改数据目录中的 diseases.json")
         else:
-            diseases_data = json.loads(
-                await anyio.Path(data_file).read_text(encoding="utf-8")
-            )
+            diseases_data = json.loads(await anyio.Path(data_file).read_text(encoding="utf-8"))
     except Exception as e:
         logger.error(f"读取疾病数据失败：{e}")
         diseases_data = {
@@ -100,9 +96,7 @@ async def form() -> tuple[float, str]:
                 encoding="utf-8",
             )
         else:
-            counter = json.loads(
-                await anyio.Path(counter_file).read_text(encoding="utf-8")
-            )
+            counter = json.loads(await anyio.Path(counter_file).read_text(encoding="utf-8"))
     except Exception as e:
         logger.error(f"读取计数器失败：{e}")
         counter = {"non_rare_count": 0.0}
@@ -118,7 +112,7 @@ async def form() -> tuple[float, str]:
         non_rare_count += 1.0
     else:
         disease = random.choice(diseases_data["rare_diseases"])
-        non_rare_count = 0.1    # 0.1 为 True，可用于区别是否为保底
+        non_rare_count = 0.1  # 0.1 为 True，可用于区别是否为保底
 
     if non_rare_count >= 30.0:
         disease = random.choice(diseases_data["rare_diseases"])
@@ -132,6 +126,7 @@ async def form() -> tuple[float, str]:
 
     logger.info(f"生成疾病：{disease}，更新后保底计数：{non_rare_count}")
     return non_rare_count, disease
+
 
 # 在 check() 后再次校验，减小错判概率
 async def ask(disease: str, question: str) -> dict[bool, str]:

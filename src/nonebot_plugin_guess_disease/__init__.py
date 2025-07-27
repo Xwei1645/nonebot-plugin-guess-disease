@@ -2,7 +2,7 @@ from nonebot import require
 
 require("nonebot_plugin_localstore")
 
-from nonebot import get_plugin_config, on_command, on_fullmatch, on_message
+from nonebot import get_plugin_config, logger, on_command, on_fullmatch, on_message
 from nonebot.adapters.onebot.v11 import Bot, Event, Message
 from nonebot.plugin import PluginMetadata
 
@@ -30,7 +30,7 @@ starting: dict[int, bool] = {}
 players: dict[int, set[int]] = {}
 current_disease: dict[int, str] = {}
 
-start = on_command("猜猜病", aliases={"猜病", "ccb", "cb"}, priority=5, block=False)
+start = on_command("猜猜病", aliases={"猜病", "ccb", "cb"}, priority=5, block=True)
 
 
 @start.handle()
@@ -131,3 +131,16 @@ async def reporting_handler(event: Event, bot: Bot):
         else:
             await reporting.send(Message(f"[CQ:reply,id={event.message_id}]{result}\n\n但是......病人好像已经似了。"))
         await bot.delete_msg(group_id=group_id, message_id=initial_msg["message_id"])
+
+
+cheat = on_command("答案", priority=1, block=True)
+
+
+@cheat.handle()
+async def cheating(event: Event):
+    group_id = event.group_id
+    user_id = event.user_id
+
+    if starting.get(group_id, False) and user_id in players.get(group_id, set()):
+        logger.info(f"群聊 {group_id} 的答案是【{current_disease[group_id]}】")
+        await cheat.send("成功在终端输出答案", at_sender=True)
