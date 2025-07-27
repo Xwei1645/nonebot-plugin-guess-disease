@@ -1,6 +1,6 @@
 [project]
 name = "nonebot-plugin-guess-disease"
-version = "0.1.2"
+version = "0.1.3"
 description = ""
 readme = "README.md"
 authors = [{ name = "Xwei1645", email = "Xwei1645@gmail.com" }]
